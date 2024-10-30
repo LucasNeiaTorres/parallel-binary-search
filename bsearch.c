@@ -49,20 +49,51 @@ int bsearch_lower_bound_paralel(long long *input, int n, long long x) {
     return left;
 }
 
+// Printa o vetor 
+void printVetor(long long v[], int n)
+{
+    for(int i = 0; i < n; i++)
+    {
+        printf("%lld ", v[i]);
+    }
+    printf("\n");
+}
+
+// Geração de números aleatórios
+void geraNaleatorios(long long v[], int n)
+{
+    for(int i = 0; i < n; i++)
+    {
+        v[i] = rand() % 10; // Gera números aleatórios de 0 a 9
+    }
+}
+
+// Necessário pra usar o qsort
+int compare(const void *a, const void *b) {
+    return (*(long long *)a - *(long long *)b);
+}
+
 int main() {
     int n = 5;   // numero de elementos preenchidos no vetor
-    long long *input = (long long *) malloc(n * sizeof(long long));
-    input[0] = 2;
-    input[1] = 2;
-    input[2] = 4;
-    input[3] = 4;
-    input[4] = 7;
+    long long *input = malloc(n * sizeof(long long));
+
+    // Randomiza a SEED
+    srand(time(NULL));
+
+    // Cria o vetor v
+    geraNaleatorios(input, n);
+
+    // Ordena o vetor v
+    qsort(input, n, sizeof(long long), compare);
  
-    printf("Resultado: %d\n", bsearch_lower_bound_paralel(input, n, 0)); // retorna 0
-    printf("Resultado: %d\n", bsearch_lower_bound_paralel(input, n, 1)); // retorna 1
-    printf("Resultado: %d\n", bsearch_lower_bound_paralel(input, n, 2)); // retorna 1
-    printf("Resultado: %d\n", bsearch_lower_bound_paralel(input, n, 4)); // retorna 2
-    printf("Resultado: %d\n", bsearch_lower_bound_paralel(input, n, 8)); // retorna 4
-    printf("Resultado: %d\n", bsearch_lower_bound_paralel(input, n, 9)); // retorna 5
+    // Printa o vetor v
+    printVetor(input, n);
+
+    printf("Resultado: %d\n", bsearch_lower_bound_paralel(input, n, 0));
+    printf("Resultado: %d\n", bsearch_lower_bound_paralel(input, n, 1));
+    printf("Resultado: %d\n", bsearch_lower_bound_paralel(input, n, 2));
+    printf("Resultado: %d\n", bsearch_lower_bound_paralel(input, n, 4));
+    printf("Resultado: %d\n", bsearch_lower_bound_paralel(input, n, 8)); 
+    printf("Resultado: %d\n", bsearch_lower_bound_paralel(input, n, 9)); 
     return 0;
 }
