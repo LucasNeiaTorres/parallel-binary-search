@@ -95,5 +95,6 @@ int main() {
     printf("Resultado: %d\n", bsearch_lower_bound_paralel(input, n, 4));
     printf("Resultado: %d\n", bsearch_lower_bound_paralel(input, n, 8)); 
     printf("Resultado: %d\n", bsearch_lower_bound_paralel(input, n, 9)); 
+    free(input);
     return 0;
 }
