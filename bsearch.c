@@ -6,11 +6,11 @@
 #include <sys/time.h>
 #include <stdlib.h>
 
-#define MAX_THREADS 8
+#define NUM_THREADS 8
 
-pthread_t parallelReduce_Thread[ MAX_THREADS ];
-int parallelReduce_thread_id[ MAX_THREADS ];
-long long parallelReduce_partialSum[ MAX_THREADS ];   
+pthread_t parallelReduce_Thread[ NUM_THREADS ];
+int parallelReduce_thread_id[ NUM_THREADS ];
+long long parallelReduce_partialSum[ NUM_THREADS ];   
 
 int parallelReduce_nThreads;  // numero efetivo de threads
                // obtido da linha de comando  
@@ -89,12 +89,12 @@ int main() {
     // Printa o vetor v
     printVetor(input, n);
 
-    printf("Resultado: %d\n", bsearch_lower_bound_paralel(input, n, 0));
-    printf("Resultado: %d\n", bsearch_lower_bound_paralel(input, n, 1));
-    printf("Resultado: %d\n", bsearch_lower_bound_paralel(input, n, 2));
-    printf("Resultado: %d\n", bsearch_lower_bound_paralel(input, n, 4));
-    printf("Resultado: %d\n", bsearch_lower_bound_paralel(input, n, 8)); 
-    printf("Resultado: %d\n", bsearch_lower_bound_paralel(input, n, 9)); 
+    printf("Resultado com 0: %d\n", bsearch_lower_bound_paralel(input, n, 0));
+    printf("Resultado com 1: %d\n", bsearch_lower_bound_paralel(input, n, 1));
+    printf("Resultado com 2: %d\n", bsearch_lower_bound_paralel(input, n, 2));
+    printf("Resultado com 4: %d\n", bsearch_lower_bound_paralel(input, n, 4));
+    printf("Resultado com 8: %d\n", bsearch_lower_bound_paralel(input, n, 8)); 
+    printf("Resultado com 9: %d\n", bsearch_lower_bound_paralel(input, n, 9)); 
     free(input);
     return 0;
 }
