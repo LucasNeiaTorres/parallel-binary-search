@@ -139,6 +139,7 @@ void printVetor(long long v[], int n) {
 int main() {
     int n = 16000000;
     long long *input = malloc(n * sizeof(long long));
+    long long target = 755;
 
     srand(time(NULL));
 
@@ -149,12 +150,16 @@ int main() {
 
     init_thread_pool();
 
-    int result = parallel_bsearch_lower_bound(input, n, 755);
-    printf("Resultado paralelo com 755: %d\n", result);
+    int result = parallel_bsearch_lower_bound(input, n, target);
+    printf("Resultado paralelo com %lld: %d\n", target, result);
 
-    int resultNormal = bsearch_lower_bound(input, n, 755);
-    printf("Resultado normal com 755: %d\n", resultNormal);
+    int resultNormal = bsearch_lower_bound(input, n, target);
+    printf("Resultado normal com %lld: %d\n", target, resultNormal);
 
     free(input);
     return 0;
 }
+// TODO: 
+// - Fazer com varios tamanhos de entrada
+// - Minimizar efeitos da cache?
+// - Ver range do input
