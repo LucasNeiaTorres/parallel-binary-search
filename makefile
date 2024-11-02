@@ -1,18 +1,18 @@
 parametrosCompilacao=-lpthread
-arquivos=bsearch.o 
-all: bsearch
+arquivos=bsearchA.o 
+all: bsearchA
 
-bsearch: ${arquivos}
-	gcc -o bsearch ${arquivos} $(parametrosCompilacao)
+bsearchA: ${arquivos}
+	gcc -o bsearchA ${arquivos} $(parametrosCompilacao)
 
 .o: .c
 	gcc -c *.c $(parametrosCompilacao)
 
-run: bsearch
-	./bsearch
+run: bsearchA
+	./bsearchA
 
 clean:
-	rm -f *.o *.gch bsearch 
+	rm -f *.o *.gch bsearchA 
 
 purge: clean
-	-rm -f bsearch
+	-rm -f bsearchA
