@@ -52,7 +52,7 @@ void *thread_worker(void *arg) {
 
         // Busca binária na faixa designada
         *task.result = bsearch_lower_bound(task.input, task.right, task.target);
-        printf("Resultado da thread de inicio %d e fim %d: %d\n", task.left, task.right, *task.result);
+        // printf("Resultado da thread de inicio %d e fim %d: %d\n", task.left, task.right, *task.result);
 
         // Marca a tarefa como concluída
         pthread_mutex_lock(&completeMutex);
@@ -108,7 +108,7 @@ int parallel_bsearch_lower_bound(long long *input, int n, long long x) {
     // Calcula o menor índice resultante
     int result = n;
     for (int i = 0; i < NUM_THREADS; i++) {
-        printf("Thread %d: %d\n", i, *threadData[i].result);
+        // printf("Thread %d: %d\n", i, *threadData[i].result);
         if ((*threadData[i].result < n) && (input[*threadData[i].result] >= x)) {
             result = *threadData[i].result < result ? *threadData[i].result : result;
         }
@@ -137,7 +137,7 @@ void printVetor(long long v[], int n) {
 }
 
 int main() {
-    int n = 1600;
+    int n = 16000000;
     long long *input = malloc(n * sizeof(long long));
 
     srand(time(NULL));
@@ -145,7 +145,7 @@ int main() {
     geraNaleatorios(input, n);
     qsort(input, n, sizeof(long long), compare);
 
-    printVetor(input, n);
+    // printVetor(input, n);
 
     init_thread_pool();
 
