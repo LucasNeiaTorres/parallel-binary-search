@@ -2,7 +2,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 
-#define NUM_THREADS 8
+#define MAX_THREADS 8
 #define MAX_TASKS 16
 #define TAM_Q 100000
 
@@ -16,11 +16,12 @@ typedef struct {
 } ThreadData;
 
 
-pthread_t threads[NUM_THREADS];
+pthread_t threads[MAX_THREADS];
 ThreadData taskQueue[MAX_TASKS];
 int taskIndex = 0;
 int tasksInQueue = 0;
 int completedTasks = 0;
+int numThreads;
 
 pthread_mutex_t queueMutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t completeMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -84,7 +85,7 @@ void *thread_worker(void *arg) {
         // Marca a tarefa como concluída
         pthread_mutex_lock(&completeMutex);
         completedTasks++;
-        if (completedTasks == NUM_THREADS) {
+        if (completedTasks == numThreads) {
             pthread_cond_signal(&completeCond);
         }
         pthread_mutex_unlock(&completeMutex);
@@ -93,7 +94,7 @@ void *thread_worker(void *arg) {
 
 // Inicializa o pool de threads
 void init_thread_pool() {
-    for (int i = 0; i < NUM_THREADS; i++) {
+    for (int i = 0; i < numThreads; i++) {
         pthread_create(&threads[i], NULL, thread_worker, NULL);
     }
 }
@@ -126,7 +127,7 @@ void parallel_bsearch_lower_bound(long long *input, int n, long long *Q, long lo
 
     // Aguarda até que todas as tarefas estejam concluídas
     pthread_mutex_lock(&completeMutex);
-    while (completedTasks < NUM_THREADS) {
+    while (completedTasks < numThreads) {
         pthread_cond_wait(&completeCond, &completeMutex);
     }
     pthread_mutex_unlock(&completeMutex);
@@ -137,9 +138,19 @@ void parallel_bsearch_lower_bound(long long *input, int n, long long *Q, long lo
     }
 }
 
-int main() {
+int main(int argc, char *argv[]) {
     int n = 16000000;
     long long *input = malloc(n * sizeof(long long));
+
+    if (argc != 2) {
+        printf("usage: %s <nThreads>\n", argv[0]);
+        return 0;
+    } else if(atoi(argv[1]) > MAX_THREADS) {
+        printf("Número de threads maior que o máximo permitido\n");
+        return 0;
+    } else {
+        numThreads = atoi(argv[1]);
+    }
 
     srand(time(NULL));
 
