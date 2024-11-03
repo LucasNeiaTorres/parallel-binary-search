@@ -6,6 +6,27 @@
 #define MAX_TASKS 16
 #define TAM_Q 100000
 
+typedef struct {
+    long long *input;
+    int left;
+    int right;
+    long long target;
+    int *result;
+    int id;
+} ThreadData;
+
+
+pthread_t threads[NUM_THREADS];
+ThreadData taskQueue[MAX_TASKS];
+int taskIndex = 0;
+int tasksInQueue = 0;
+int completedTasks = 0;
+
+pthread_mutex_t queueMutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t completeMutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t queueCond = PTHREAD_COND_INITIALIZER;
+pthread_cond_t completeCond = PTHREAD_COND_INITIALIZER;
+
 // Implementação de busca binária (bsearch_lower_bound)
 int single_bsearch_lower_bound(long long *input, int n, long long x) {
     int left = 0, right = n;
@@ -42,8 +63,82 @@ void printVetor(long long v[], int n) {
     printf("\n");
 }
 
+// Função de trabalho da thread
+void *thread_worker(void *arg) {
+    while (1) {
+        pthread_mutex_lock(&queueMutex);
+
+        while (tasksInQueue == 0) pthread_cond_wait(&queueCond, &queueMutex);
+
+        // Pega uma tarefa da fila
+        ThreadData task = taskQueue[taskIndex];
+        taskIndex = (taskIndex + 1) % MAX_TASKS;
+        tasksInQueue--;
+
+        pthread_mutex_unlock(&queueMutex);
+
+        // Busca binária na faixa designada
+        *task.result = single_bsearch_lower_bound(task.input, task.right, task.target);
+        // printf("Resultado da thread de inicio %d e fim %d: %d\n", task.left, task.right, *task.result);
+
+        // Marca a tarefa como concluída
+        pthread_mutex_lock(&completeMutex);
+        completedTasks++;
+        if (completedTasks == NUM_THREADS) {
+            pthread_cond_signal(&completeCond);
+        }
+        pthread_mutex_unlock(&completeMutex);
+    }
+}
+
+// Inicializa o pool de threads
+void init_thread_pool() {
+    for (int i = 0; i < NUM_THREADS; i++) {
+        pthread_create(&threads[i], NULL, thread_worker, NULL);
+    }
+}
+
+// Adiciona uma tarefa ao pool de threads
+void add_task(long long *input, int left, int right, long long target, int *result) {
+    pthread_mutex_lock(&queueMutex);
+
+    taskQueue[(taskIndex + tasksInQueue) % MAX_TASKS] = (ThreadData){input, left, right, target, result, -1};
+    tasksInQueue++;
+
+    pthread_cond_signal(&queueCond);
+    pthread_mutex_unlock(&queueMutex);
+}
+
+// Função de busca paralela com espera pelas threads
+void parallel_bsearch_lower_bound(long long *input, int n, long long *Q, long long nQ, long long *Pos) {
+    ThreadData threadData[nQ];
+    completedTasks = 0;
+
+    for(int i = 0; i < nQ; i++){
+        threadData[i].input = input;
+        threadData[i].left = 0;
+        threadData[i].right = n;
+        threadData[i].target = Q[i];
+        threadData[i].result = malloc(sizeof(int));
+        *threadData[i].result = n;
+        add_task(input, threadData[i].left, threadData[i].right, Q[i], threadData[i].result);
+    }
+
+    // Aguarda até que todas as tarefas estejam concluídas
+    pthread_mutex_lock(&completeMutex);
+    while (completedTasks < NUM_THREADS) {
+        pthread_cond_wait(&completeCond, &completeMutex);
+    }
+    pthread_mutex_unlock(&completeMutex);
+
+    for(int i = 0; i < nQ; i++){
+        Pos[i] = *threadData[i].result;
+        free(threadData[i].result);
+    }
+}
+
 int main() {
-    int n = 16;
+    int n = 16000000;
     long long *input = malloc(n * sizeof(long long));
 
     srand(time(NULL));
@@ -51,24 +146,29 @@ int main() {
     geraNaleatorios(input, n);
     qsort(input, n, sizeof(long long), compare);
 
-    printVetor(input, n);
+    // printVetor(input, n);
 
-    // init_thread_pool();
 
     long long *Q = malloc(TAM_Q * sizeof(long long));  
     long long *Pos = malloc(TAM_Q * sizeof(long long));  
-    long long nQ = 3;
+    long long nQ = 100;
 
     geraNaleatorios(Q, nQ);
-    printVetor(Q, nQ);
+    // printVetor(Q, nQ);
+
+    init_thread_pool();
 
     bsearch_lower_bound(input, n, Q, nQ, Pos); 
-    printf("Resultado normal:\n");
+    printf("\nResultado paralelizado:\n");
     printVetor(Pos, nQ);
 
-    // int resultNormal = bsearch_lower_bound(input, n, target);
-    // printf("Resultado normal com %lld: %d\n", target, resultNormal);
+    bsearch_lower_bound(input, n, Q, nQ, Pos); 
+    printf("\nResultado normal:\n");
+    printVetor(Pos, nQ);
+
 
     free(input);
+    free(Q);
+    free(Pos);
     return 0;
 }
