@@ -4,6 +4,7 @@
 
 #define MAX_THREADS 8
 #define MAX_TASKS 16
+#define MAX_ELEM 16000000
 
 typedef struct
 {
@@ -161,33 +162,37 @@ void printVetor(long long v[], int n)
 
 int main(int argc, char *argv[])
 {
-    int n = 16000000;
-    long long *input = malloc(n * sizeof(long long));
-    long long target = 755;
-
-    if (argc != 2) {
-        printf("usage: %s <nThreads>\n", argv[0]);
+    int numElem;
+    if (argc != 3) {
+        printf("usage: %s <numElem> <nThreads>\n", argv[0]);
         return 0;
-    } else if(atoi(argv[1]) > MAX_THREADS) {
+    } else if(atoi(argv[2]) > MAX_THREADS) {
         printf("Número de threads maior que o máximo permitido\n");
         return 0;
+    } else if(atoi(argv[1]) > MAX_ELEM) {
+        printf("Número de elementos maior que o máximo permitido\n");
+        return 0;
     } else {
-        numThreads = atoi(argv[1]);
+        numThreads = atoi(argv[2]);
+        numElem = atoi(argv[1]);
     }
+
+    long long *input = malloc(numElem * sizeof(long long));
+    long long target = 755;
 
     srand(time(NULL));
 
-    geraNaleatorios(input, n);
-    qsort(input, n, sizeof(long long), compare);
+    geraNaleatorios(input, numElem);
+    qsort(input, numElem, sizeof(long long), compare);
 
     // printVetor(input, n);
 
     init_thread_pool();
 
-    int result = parallel_bsearch_lower_bound(input, n, target);
+    int result = parallel_bsearch_lower_bound(input, numElem, target);
     printf("Resultado paralelo com %lld: %d\n", target, result);
 
-    int resultNormal = bsearch_lower_bound(input, 0, n, target);
+    int resultNormal = bsearch_lower_bound(input, 0, numElem, target);
     printf("Resultado normal com %lld: %d\n", target, resultNormal);
 
     free(input);

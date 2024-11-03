@@ -5,6 +5,7 @@
 #define MAX_THREADS 8
 #define MAX_TASKS 16
 #define TAM_Q 100000
+#define MAX_ELEM 16000000
 
 typedef struct {
     long long *input;
@@ -139,41 +140,44 @@ void parallel_bsearch_lower_bound(long long *input, int n, long long *Q, long lo
 }
 
 int main(int argc, char *argv[]) {
-    int n = 16000000;
-    long long *input = malloc(n * sizeof(long long));
-
-    if (argc != 2) {
-        printf("usage: %s <nThreads>\n", argv[0]);
+    int numElem;
+    if (argc != 3) {
+        printf("usage: %s <numElem> <nThreads>\n", argv[0]);
         return 0;
-    } else if(atoi(argv[1]) > MAX_THREADS) {
+    } else if(atoi(argv[2]) > MAX_THREADS) {
         printf("Número de threads maior que o máximo permitido\n");
         return 0;
+    } else if(atoi(argv[1]) > MAX_ELEM) {
+        printf("Número de elementos maior que o máximo permitido\n");
+        return 0;
     } else {
-        numThreads = atoi(argv[1]);
+        numThreads = atoi(argv[2]);
+        numElem = atoi(argv[1]);
     }
+    
+    long long *input = malloc(numElem * sizeof(long long));
 
     srand(time(NULL));
 
-    geraNaleatorios(input, n);
-    qsort(input, n, sizeof(long long), compare);
+    geraNaleatorios(input, numElem);
+    qsort(input, numElem, sizeof(long long), compare);
 
-    // printVetor(input, n);
-
+    // printVetor(input, numElem);
 
     long long *Q = malloc(TAM_Q * sizeof(long long));  
     long long *Pos = malloc(TAM_Q * sizeof(long long));  
-    long long nQ = 100;
+    long long nQ = 100000;
 
     geraNaleatorios(Q, nQ);
     // printVetor(Q, nQ);
 
     init_thread_pool();
 
-    bsearch_lower_bound(input, n, Q, nQ, Pos); 
+    bsearch_lower_bound(input, numElem, Q, nQ, Pos); 
     printf("\nResultado paralelizado:\n");
     printVetor(Pos, nQ);
 
-    bsearch_lower_bound(input, n, Q, nQ, Pos); 
+    bsearch_lower_bound(input, numElem, Q, nQ, Pos); 
     printf("\nResultado normal:\n");
     printVetor(Pos, nQ);
 
