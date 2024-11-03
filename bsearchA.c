@@ -26,8 +26,7 @@ pthread_cond_t queueCond = PTHREAD_COND_INITIALIZER;
 pthread_cond_t completeCond = PTHREAD_COND_INITIALIZER;
 
 // Implementação de busca binária (bsearch_lower_bound)
-int bsearch_lower_bound(long long *input, int n, long long x) {
-    int left = 0, right = n;
+int bsearch_lower_bound(long long *input, int left, int right, long long x) {
     while (left < right) {
         int m = left + (right - left) / 2;
         if (input[m] < x) left = m + 1;
@@ -51,7 +50,7 @@ void *thread_worker(void *arg) {
         pthread_mutex_unlock(&queueMutex);
 
         // Busca binária na faixa designada
-        *task.result = bsearch_lower_bound(task.input, task.right, task.target);
+        *task.result = bsearch_lower_bound(task.input, task.left, task.right, task.target);
         // printf("Resultado da thread de inicio %d e fim %d: %d\n", task.left, task.right, *task.result);
 
         // Marca a tarefa como concluída
@@ -153,13 +152,9 @@ int main() {
     int result = parallel_bsearch_lower_bound(input, n, target);
     printf("Resultado paralelo com %lld: %d\n", target, result);
 
-    int resultNormal = bsearch_lower_bound(input, n, target);
+    int resultNormal = bsearch_lower_bound(input, 0, n, target);
     printf("Resultado normal com %lld: %d\n", target, resultNormal);
 
     free(input);
     return 0;
 }
-// TODO: 
-// - Fazer com varios tamanhos de entrada
-// - Minimizar efeitos da cache?
-// - Ver range do input
