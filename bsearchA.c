@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <stdlib.h>
+#include "chrono.h"
 
 #define MAX_THREADS 8
 #define MAX_TASKS 16
 #define MAX_ELEM 16000000
+#define NTIMES 10
 
 typedef struct
 {
@@ -179,6 +181,7 @@ int main(int argc, char *argv[])
 
     long long *input = malloc(numElem * sizeof(long long));
     long long target = 755;
+    double timeSeconds;
 
     srand(time(NULL));
 
@@ -187,13 +190,30 @@ int main(int argc, char *argv[])
 
     // printVetor(input, n);
 
+    // Começa o cronômetro
+    chronometer_t time;
+    chrono_reset(&time);
+    chrono_start(&time);
+
     init_thread_pool();
 
     int result = parallel_bsearch_lower_bound(input, numElem, target);
-    printf("Resultado paralelo com %lld: %d\n", target, result);
+    // printf("Resultado paralelo com %lld: %d\n", target, result);
 
-    int resultNormal = bsearch_lower_bound(input, 0, numElem, target);
-    printf("Resultado normal com %lld: %d\n", target, resultNormal);
+    // int resultNormal = bsearch_lower_bound(input, 0, numElem, target);
+    // printf("Resultado normal com %lld: %d\n", target, resultNormal);
+
+    // Para o cronometro
+    chrono_stop(&time);
+
+    // Printando tempo e MOPS
+    chrono_reportTime(&time, "time: ");
+    timeSeconds = (double) chrono_gettotal(&time) / ((double)1000 * 1000 * 1000); // NanoSeconds para Seconds
+    printf("\nO algoritmo demorou: %lf ms\n", timeSeconds);
+    // printf("E a vazão foi de: %lf MOPS", (numElem/timeSeconds));  // MOPS
+    // double OPS = ((double)nTotalElements*NTIMES)/total_time_in_seconds;
+    // printf( "Throughput: %lf OP/s\n", OPS );
+    // verificar como calcula a vazao
 
     free(input);
     return 0;
