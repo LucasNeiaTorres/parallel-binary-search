@@ -5,7 +5,7 @@
 
 #define MAX_THREADS 8
 #define MAX_TASKS 16
-#define MAX_ELEM 16000000
+#define MAX_ELEM 160000000
 #define NTIMES 10
 
 typedef struct

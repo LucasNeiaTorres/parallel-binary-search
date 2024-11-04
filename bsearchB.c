@@ -1,12 +1,14 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <stdlib.h>
+#include <string.h>
 #include "chrono.h"
 
 #define MAX_THREADS 8
 #define MAX_TASKS 16
 #define TAM_Q 100000
-#define MAX_ELEM 16000000
+#define MAX_ELEM 1600000
+#define NTIMES 10
 
 typedef struct {
     long long *input;
@@ -17,7 +19,7 @@ typedef struct {
     int id;
 } ThreadData;
 
-
+long long inputG[10 * MAX_ELEM];
 pthread_t threads[MAX_THREADS];
 ThreadData taskQueue[MAX_TASKS];
 int taskIndex = 0;
@@ -42,7 +44,7 @@ int single_bsearch_lower_bound(long long *input, int n, long long x) {
 }
 
 // bsearch_lower_bound com varias pesquisas
-void bsearch_lower_bound(long long *input, int n, long long *Q, long long nQ, long long *Pos) {
+void bsearch_lower_bound(long long *input, int n, long long *Q, long long nQ, long long int *Pos) {
     for (int i = 0; i < nQ; i++) {
         Pos[i] = single_bsearch_lower_bound(input, n, Q[i]);
     }
@@ -52,6 +54,13 @@ void bsearch_lower_bound(long long *input, int n, long long *Q, long long nQ, lo
 void geraNaleatorios(long long v[], int n) {
     for (int i = 0; i < n; i++) {
         v[i] = rand() % 1000;
+    }
+}
+
+void concatenaVetor(long long *inputG[], long long G[], int numElem){
+    memcpy(inputG, G, sizeof(long long));
+    for (int i = 0; i < 10; i++) {
+        memcpy(inputG + (numElem*i), G, numElem*sizeof(long long));
     }
 }
 
@@ -113,7 +122,7 @@ void add_task(long long *input, int left, int right, long long target, int *resu
 }
 
 // Função de busca paralela com espera pelas threads
-void parallel_bsearch_lower_bound(long long *input, int n, long long *Q, long long nQ, long long *Pos) {
+void parallel_bsearch_lower_bound(long long *input, int n, long long *Q, long long nQ, long long int *Pos) {
     ThreadData threadData[nQ];
     completedTasks = 0;
 
@@ -140,68 +149,78 @@ void parallel_bsearch_lower_bound(long long *input, int n, long long *Q, long lo
     }
 }
 
-int main(int argc, char *argv[]) {
-    int numElem;
-    if (argc != 3) {
-        printf("usage: %s <numElem> <nThreads>\n", argv[0]);
-        return 0;
-    } else if(atoi(argv[2]) > MAX_THREADS) {
-        printf("Número de threads maior que o máximo permitido\n");
-        return 0;
-    } else if(atoi(argv[1]) > MAX_ELEM) {
-        printf("Número de elementos maior que o máximo permitido\n");
-        return 0;
-    } else {
-        numThreads = atoi(argv[2]);
-        numElem = atoi(argv[1]);
-    }
-    
-    long long *input = malloc(numElem * sizeof(long long));
-    double timeSeconds;
-
-    srand(time(NULL));
-
-    geraNaleatorios(input, numElem);
-    qsort(input, numElem, sizeof(long long), compare);
-
-    // printVetor(input, numElem);
-
-    long long *Q = malloc(TAM_Q * sizeof(long long));  
-    long long *Pos = malloc(TAM_Q * sizeof(long long));  
+int main() {
+    long long numElem = 100; // Supondo que numElem é 100
     long long nQ = 100000;
+
+    long long *input = malloc(numElem * sizeof(long long));
+    if (input == NULL) {
+        fprintf(stderr, "Erro ao alocar memória para input\n");
+        return 1;
+    }
+
+    long long *Q = malloc(nQ * sizeof(long long));
+    if (Q == NULL) {
+        fprintf(stderr, "Erro ao alocar memória para Q\n");
+        free(input);
+        return 1;
+    }
+
+    long long *Pos = malloc(TAM_Q * sizeof(long long));
+    if (Pos == NULL) {
+        fprintf(stderr, "Erro ao alocar memória para Pos\n");
+        free(input);
+        free(Q);
+        return 1;
+    }
+
+    long long *inputG = malloc(NTIMES * numElem * sizeof(long long));
+    if (inputG == NULL) {
+        fprintf(stderr, "Erro ao alocar memória para inputG\n");
+        free(input);
+        free(Q);
+        free(Pos);
+        return 1;
+    }
+
+    long long *QG = malloc(NTIMES * nQ * sizeof(long long));
+    if (QG == NULL) {
+        fprintf(stderr, "Erro ao alocar memória para QG\n");
+        free(input);
+        free(Q);
+        free(Pos);
+        free(inputG);
+        return 1;
+    }
 
     geraNaleatorios(Q, nQ);
     // printVetor(Q, nQ);
 
-    // Começa o cronômetro
-    chronometer_t time;
-    chrono_reset(&time);
-    chrono_start(&time);
+    for (int j = 0; j < NTIMES; j++) {
+        memcpy(inputG + (j * numElem), input, numElem * sizeof(long long));
+        memcpy(QG + (j * nQ), Q, nQ * sizeof(long long));
+    }
 
     init_thread_pool();
 
-    parallel_bsearch_lower_bound(input, numElem, Q, nQ, Pos); 
-    // printf("\nResultado paralelizado:\n");
-    // printVetor(Pos, nQ);
-
-    // bsearch_lower_bound(input, numElem, Q, nQ, Pos); 
-    // printf("\nResultado normal:\n");
-    // printVetor(Pos, nQ);
-
-    // Para o cronometro
+    double timeSeconds = 0.0;
+    chronometer_t time;
+    chrono_reset(&time);
+    chrono_start(&time);
+    for (int i = 0; i < NTIMES; i++) {
+        parallel_bsearch_lower_bound(&inputG[i * numElem], numElem, &QG[i * nQ], nQ, Pos);
+    }
     chrono_stop(&time);
-
-    // Printando tempo e MOPS
-    chrono_reportTime(&time, "time: ");
-    timeSeconds = (double) chrono_gettotal(&time) / ((double)1000 * 1000 * 1000); // NanoSeconds para Seconds
-    printf("\nO algoritmo demorou: %lf ms\n", timeSeconds);
-    // printf("E a vazão foi de: %lf MOPS", (numElem/timeSeconds));  // MOPS
-    // double OPS = ((double)nTotalElements*NTIMES)/total_time_in_seconds;
-    // printf( "Throughput: %lf OP/s\n", OPS );
-    // verificar como calcula a vazao
+    // chrono_reportTime(&time, "time: ");
+    timeSeconds += (double)chrono_gettotal(&time) / ((double)1000 * 1000 * 1000); // NanoSeconds para Seconds
+    double tempoMedio = timeSeconds / NTIMES;
+    printf("\ntotal_time_in_seconds: %lf s\n", tempoMedio);
 
     free(input);
     free(Q);
     free(Pos);
+    free(inputG);
+    free(QG);
+
     return 0;
 }
