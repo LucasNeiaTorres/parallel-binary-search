@@ -2,6 +2,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include "chrono.h"
+#include <string.h>
 
 #define MAX_THREADS 8
 #define MAX_TASKS 16
@@ -30,6 +31,7 @@ pthread_cond_t queueCond = PTHREAD_COND_INITIALIZER;
 pthread_cond_t completeCond = PTHREAD_COND_INITIALIZER;
 
 int numThreads;
+long long *inputG[10 * MAX_ELEM];
 
 // Implementação de busca binária (bsearch_lower_bound)
 int bsearch_lower_bound(long long *input, int left, int right, long long x)
@@ -180,13 +182,29 @@ int main(int argc, char *argv[])
     }
 
     long long *input = malloc(numElem * sizeof(long long));
+    if (input == NULL) {
+        fprintf(stderr, "Erro ao alocar memória para input\n");
+        return 1;
+    }
+
+    long long *inputG = malloc(NTIMES * numElem * sizeof(long long));
+    if (inputG == NULL) {
+        fprintf(stderr, "Erro ao alocar memória para inputG\n");
+        free(input);
+        return 1;
+    }
+
     long long target = 755;
-    double timeSeconds;
+    double timeSeconds = 0.0;
 
     srand(time(NULL));
 
     geraNaleatorios(input, numElem);
     qsort(input, numElem, sizeof(long long), compare);
+
+    for (int j = 0; j < NTIMES; j++) {
+        memcpy(inputG + (j * numElem), input, numElem * sizeof(long long));
+    }
 
     // printVetor(input, n);
 
@@ -197,24 +215,17 @@ int main(int argc, char *argv[])
 
     init_thread_pool();
 
-    int result = parallel_bsearch_lower_bound(input, numElem, target);
-    // printf("Resultado paralelo com %lld: %d\n", target, result);
+    for (int i = 0; i < NTIMES; i++) {
+        int result = parallel_bsearch_lower_bound(&inputG[i * numElem], numElem, target);
+    }
 
-    // int resultNormal = bsearch_lower_bound(input, 0, numElem, target);
-    // printf("Resultado normal com %lld: %d\n", target, resultNormal);
-
-    // Para o cronometro
     chrono_stop(&time);
-
-    // Printando tempo e MOPS
-    chrono_reportTime(&time, "time: ");
-    timeSeconds = (double) chrono_gettotal(&time) / ((double)1000 * 1000 * 1000); // NanoSeconds para Seconds
-    printf("\nO algoritmo demorou: %lf ms\n", timeSeconds);
-    // printf("E a vazão foi de: %lf MOPS", (numElem/timeSeconds));  // MOPS
-    // double OPS = ((double)nTotalElements*NTIMES)/total_time_in_seconds;
-    // printf( "Throughput: %lf OP/s\n", OPS );
-    // verificar como calcula a vazao
+    // chrono_reportTime(&time, "time: ");
+    timeSeconds += (double)chrono_gettotal(&time) / ((double)1000 * 1000 * 1000); // NanoSeconds para Seconds
+    double tempoMedio = timeSeconds / NTIMES;
+    printf("\ntotal_time_in_seconds: %lf s\n", tempoMedio);
 
     free(input);
+    free(inputG);
     return 0;
 }
