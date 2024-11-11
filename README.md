@@ -1,24 +1,6 @@
 # T1-Paralela
 Trabalho 1 da matéria de Programação Paralela
 
-Ci1316 2sem2024  - trabalho 1 - versao 1.1
----------------
-
-DATA da Entrega: 01/nov/24
-Local de entrega: UFPR Virtual
-Equipe de alunos:
-   Esse trabalho pode ser feito em grupo de NO MAXIMO dois alunos(as)
-
-----------------------    
-Historico:
-versao 1.0 versao inicial
-Versao 1.1 pequenas melhorias nas descricoes
-Versao 1.2 pequenas melhorias nas descricoes *anotadas com (v1.2)*
-     
-OBS: essa especificacao pode receber pequenas alteracoes em breve
-     para melhor clareza das atividades      
---------------------------
-
 Nesse trabalho 1 vamos paralelizar a função abaixo,
 conforme essa especificacao inicial.
 
